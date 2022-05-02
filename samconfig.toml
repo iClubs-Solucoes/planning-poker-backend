@@ -1,0 +1,11 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "Dev-IC-Planning-Poker-Backend-Deploy"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-r1jxkz8k6jf9"
+s3_prefix = "Dev-IC-Planning-Poker-Backend-Deploy"
+region = "us-east-2"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Stage=\"dev\" Tenant=\"ic\" Debug=\"False\""
+image_repositories = []

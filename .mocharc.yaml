@@ -1,0 +1,8 @@
+exit: true
+bail: true
+slow: 1000
+recursive: true
+exclude: 
+  - './app/src/mocks/*.ts'
+spec:
+  - './app/tests/**/*.spec.ts'

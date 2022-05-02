@@ -1,0 +1,213 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    Description: API Stage
+  Tenant:
+    Type: String
+    Default: ic
+    Description: API Stage
+  Debug:
+    Type: String
+    Default: false
+    Description: Debug flag for logs
+
+Resources:
+  PlanningPokerAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Stage
+      Cors: 
+        AllowMethods: "'*'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+
+  NewSprintTaskLambda:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Architectures: 
+        - arm64
+      FunctionName: !Sub ${Stage}-${Tenant}-new-sprint-task
+      CodeUri: ./build
+      Handler: src/handler/NewSprintTask.newSprintTask
+      Runtime: nodejs12.x
+      Policies: 
+        - AmazonDynamoDBFullAccess
+      Environment:
+        Variables:
+          TENANT: !Ref Tenant
+          STAGE: !Ref Stage
+          REGION: !Ref "AWS::Region"
+          DEBUG: !Ref Debug
+      Events:
+        TaskAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PlanningPokerAPI
+            Path: /
+            Method: POST
+
+  LogGroupNewSprintTaskLambda:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', ['/aws/lambda/', !Sub '${Stage}-${Tenant}-new-sprint-task']]
+
+  ChangeTaskVotingStatusLambda:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Architectures: 
+        - arm64
+      FunctionName: !Sub ${Stage}-${Tenant}-change-task-voting-status
+      CodeUri: ./build
+      Handler: src/handler/ChangeTaskVotingStatus.changeTaskVotingStatus
+      Runtime: nodejs12.x
+      Policies: 
+        - AmazonDynamoDBFullAccess
+      Environment:
+        Variables:
+          TENANT: !Ref Tenant
+          STAGE: !Ref Stage
+          REGION: !Ref "AWS::Region"
+          DEBUG: !Ref Debug
+      Events:
+        TaskAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PlanningPokerAPI
+            Path: /voting/sprints/{sprint_id}/tasks/{task_id}/{status}
+            Method: PUT
+
+  LogGroupChangeTaskVotingStatusLambda:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', ['/aws/lambda/', !Sub '${Stage}-${Tenant}-change-task-voting-status']]
+
+  VoteTaskLambda:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Architectures: 
+        - arm64
+      FunctionName: !Sub ${Stage}-${Tenant}-vote-task
+      CodeUri: ./build
+      Handler: src/handler/VoteTask.voteTask
+      Runtime: nodejs12.x
+      Policies: 
+        - AmazonDynamoDBFullAccess
+      Environment:
+        Variables:
+          TENANT: !Ref Tenant
+          STAGE: !Ref Stage
+          REGION: !Ref "AWS::Region"
+          DEBUG: !Ref Debug
+      Events:
+        TaskAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PlanningPokerAPI
+            Path: /voting/sprints/{sprint_id}
+            Method: POST
+
+  LogGroupVoteTaskLambda:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', ['/aws/lambda/', !Sub '${Stage}-${Tenant}-vote-task']]
+      
+  GetSprintsLambda:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Architectures: 
+        - arm64
+      FunctionName: !Sub ${Stage}-${Tenant}-get-sprints
+      CodeUri: ./build
+      Handler: src/handler/GetSprints.getSprints
+      Runtime: nodejs12.x
+      Policies: 
+        - AmazonDynamoDBFullAccess
+      Environment:
+        Variables:
+          TENANT: !Ref Tenant
+          STAGE: !Ref Stage
+          REGION: !Ref "AWS::Region"
+          DEBUG: !Ref Debug
+      Events:
+        SprintAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PlanningPokerAPI
+            Path: /sprints
+            Method: GET
+
+  LogGroupGetSprintsLambda:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', ['/aws/lambda/', !Sub '${Stage}-${Tenant}-get-sprints']]
+      
+  GetSprintsTasksLambda:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Architectures: 
+        - arm64
+      FunctionName: !Sub ${Stage}-${Tenant}-get-sprints-tasks
+      CodeUri: ./build
+      Handler: src/handler/GetSprintsTasks.getSprintsTasks
+      Runtime: nodejs12.x
+      Policies: 
+        - AmazonDynamoDBFullAccess
+      Environment:
+        Variables:
+          TENANT: !Ref Tenant
+          STAGE: !Ref Stage
+          REGION: !Ref "AWS::Region"
+          DEBUG: !Ref Debug
+      Events:
+        TaskAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PlanningPokerAPI
+            Path: /sprints/{sprint_id}/tasks
+            Method: GET
+
+  LogGroupGetSprintsTasksLambda:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', ['/aws/lambda/', !Sub '${Stage}-${Tenant}-get-sprints-tasks']]
+      
+  GetTaskLambda:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Architectures: 
+        - arm64
+      FunctionName: !Sub ${Stage}-${Tenant}-get-task
+      CodeUri: ./build
+      Handler: src/handler/GetTask.getTask
+      Runtime: nodejs12.x
+      Policies: 
+        - AmazonDynamoDBFullAccess
+      Environment:
+        Variables:
+          TENANT: !Ref Tenant
+          STAGE: !Ref Stage
+          REGION: !Ref "AWS::Region"
+          DEBUG: !Ref Debug
+      Events:
+        TaskAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PlanningPokerAPI
+            Path: /sprints/{sprint_id}/tasks/{task_id}
+            Method: GET
+
+  LogGroupGetTaskLambda:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', ['/aws/lambda/', !Sub '${Stage}-${Tenant}-get-task']]
+      
+Outputs:
+  BackendBaseAPI:
+    Description: "API Gateway endpoint base URL"
+    Value: !Sub "https://${PlanningPokerAPI}.execute-api.${AWS::Region}.amazonaws.com/${Stage}"
+    Export:
+      Name: !Sub ${Stage}-${Tenant}-BackendBaseAPI
